@@ -1,0 +1,28 @@
+{
+  "query": "SHOW CREATE TABLE checkIns;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user QrZ2rXYBqwgzmZc.root --database LNiW9HuNSiWXqgLTgqgSMj --execute SHOW CREATE TABLE checkIns;",
+  "rows": [
+    {
+      "Table": "checkIns",
+      "Create Table": "CREATE TABLE `checkIns` ("
+    }
+  ],
+  "messages": [
+    "  `id` int NOT NULL AUTO_INCREMENT,",
+    "  `userId` int NOT NULL,",
+    "  `date` varchar(10) NOT NULL,",
+    "  `sleepHours` float NOT NULL,",
+    "  `sleepQuality` int NOT NULL,",
+    "  `morningEnergy` int NOT NULL,",
+    "  `caffeineToday` tinyint(1) NOT NULL DEFAULT '0',",
+    "  `stressLevel` int NOT NULL,",
+    "  `workload` varchar(20) NOT NULL DEFAULT 'moderate',",
+    "  `notes` text DEFAULT NULL,",
+    "  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,",
+    "  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */",
+    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin"
+  ],
+  "stdout": "Table\tCreate Table\ncheckIns\tCREATE TABLE `checkIns` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `userId` int NOT NULL,\n  `date` varchar(10) NOT NULL,\n  `sleepHours` float NOT NULL,\n  `sleepQuality` int NOT NULL,\n  `morningEnergy` int NOT NULL,\n  `caffeineToday` tinyint(1) NOT NULL DEFAULT '0',\n  `stressLevel` int NOT NULL,\n  `workload` varchar(20) NOT NULL DEFAULT 'moderate',\n  `notes` text DEFAULT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

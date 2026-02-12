@@ -1,0 +1,31 @@
+# Sleepline — Daily Command Center TODO
+
+## Core Features
+- [x] Onboarding survey (multi-step: name, sleep prefs, chronotype, goals)
+- [x] Daily check-in form (sleep hours, quality, energy, stress, workload)
+- [x] Dashboard 3-column layout (AI panel, clock ring, timeline)
+- [x] Real-time clock ring with day progress and current block highlight
+- [x] Now/Next countdown display
+- [x] Bedtime/wake options (Performance/Balanced/Recovery)
+- [x] Today timeline with tasks + system blocks
+- [x] AI Plan panel with structured action cards (preview/apply/discard)
+- [x] Quick action buttons: Done, Snooze 10m
+- [x] Focus timer (start/pause/stop)
+- [x] Smart text parser for natural language day descriptions
+- [x] Deterministic scheduler (assigns times, inserts breaks/snacks/wind-down)
+- [x] Zod schemas for Task, SystemBlock, SleepOption, DayPlan
+- [x] History page (check-in + plan history with stats)
+- [x] Settings page (profile, sleep prefs, notifications, day prefs)
+- [x] Browser notification service (wind-down, bedtime, next-task reminders)
+- [x] Dreamy dark UI with aurora background, glass cards, noise overlay
+- [x] Responsive design (3 columns desktop, stacked mobile)
+- [x] Smooth animations with prefers-reduced-motion support
+
+## Backend Integration (web-db-user upgrade)
+- [x] Create server-side AI planning endpoint using invokeLLM
+- [x] Create database tables for plans, check-ins, tasks, sleep options
+- [x] Wire AI planner to use server-side LLM instead of client-side API calls
+- [x] Add tRPC procedures for plan CRUD, check-in CRUD
+- [x] Fix Home.tsx conflict from upgrade
+- [x] Write vitest tests for scheduler and AI planning (20 tests passing)
+- [x] Create README with setup instructions

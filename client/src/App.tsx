@@ -1,38 +1,94 @@
+/**
+ * Sleepline — App Root
+ * Celestial Observatory Design System
+ * Dark-first, dreamy UI with aurora background
+ */
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import { useStore } from "@/lib/store";
+import { useEffect } from "react";
+import { scheduleReminders, clearAllNotifications } from "@/lib/notifications";
 
+// Pages
+import OnboardingPage from "@/pages/Onboarding";
+import CheckInPage from "@/pages/CheckIn";
+import Dashboard from "@/pages/Dashboard";
+import HistoryPage from "@/pages/HistoryPage";
+import SettingsPage from "@/pages/SettingsPage";
+import NavHeader from "@/components/NavHeader";
+function AppContent() {
+  const currentPage = useStore(s => s.currentPage);
+  const user = useStore(s => s.user);
+  const todayPlan = useStore(s => s.todayPlan());
 
-function Router() {
+  // Auto-redirect logic
+  useEffect(() => {
+    if (!user) {
+      useStore.getState().setPage("onboarding");
+    }
+  }, [user]);
+
+  // Schedule notifications when plan changes
+  useEffect(() => {
+    if (todayPlan && user) {
+      scheduleReminders(todayPlan, user.reminderSettings);
+    }
+    return () => clearAllNotifications();
+  }, [todayPlan, user]);
+
+  // Determine which page to show
+  const page = !user ? "onboarding" : currentPage;
+
+  // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <div className="min-h-screen relative">
+      {/* Aurora background */}
+      <div className="aurora-bg" />
+
+      {/* Noise overlay */}
+      <div className="noise-overlay" />
+
+      {/* Content */}
+      <div className="relative z-10 min-h-screen">
+        {page !== "onboarding" && page !== "checkin" && (
+          <div className="container pt-4 pb-2">
+            <NavHeader />
+          </div>
+        )}
+
+        <main className={`container ${page !== "onboarding" && page !== "checkin" ? "pt-4 pb-8" : ""}`}>
+          {page === "onboarding" && <OnboardingPage />}
+          {page === "checkin" && <CheckInPage />}
+          {page === "dashboard" && <Dashboard />}
+          {page === "history" && <HistoryPage />}
+          {page === "settings" && <SettingsPage />}
+        </main>
+      </div>
+    </div>
   );
 }
-
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: "rgba(15, 24, 63, 0.9)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                color: "#e9f1fb",
+                backdropFilter: "blur(20px)",
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+              },
+            }}
+          />
+          <AppContent />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
