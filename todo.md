@@ -29,3 +29,14 @@
 - [x] Fix Home.tsx conflict from upgrade
 - [x] Write vitest tests for scheduler and AI planning (20 tests passing)
 - [x] Create README with setup instructions
+
+
+## Critical Bug Fixes (Scheduling)
+
+- [ ] Audit task parsing logic for natural language time conversion (e.g., "4:00-5:00 PM", "30m after school")
+- [ ] Fix state management to ensure immutability and proper task merging
+- [ ] Add validation to prevent overlapping tasks from corrupting timeline
+- [ ] Implement defensive logic so new tasks append/update without deleting existing entries
+- [ ] Add logging around task creation, update, delete events
+- [ ] Verify tasks use stable unique IDs and aren't overwritten by index-based updates
+- [ ] Test task creation, updates, and multiple edits to ensure consistency

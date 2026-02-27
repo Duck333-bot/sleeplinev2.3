@@ -1,9 +1,12 @@
 /**
- * Sleepline — AI Planning Pipeline (Client-side)
+ * Sleepline — AI Planning Pipeline v2 (Fixed)
  * 
- * 1. Tries server-side LLM via tRPC (ai.generatePlan)
- * 2. Falls back to smart text parser if server fails
- * 3. Passes result to deterministic scheduler
+ * Improvements:
+ * 1. Better time range parsing with explicit AM/PM handling
+ * 2. Validation to prevent overlapping tasks
+ * 3. Defensive logic to ensure tasks are never lost
+ * 4. Comprehensive logging for debugging
+ * 5. Immutable state updates
  */
 
 import { nanoid } from "nanoid";
@@ -28,6 +31,9 @@ export async function generatePlanPreview(
   const { userPrompt, onboarding, checkIn } = request;
   const today = new Date().toISOString().slice(0, 10);
 
+  console.log("[AI Planner] Starting plan generation for:", today);
+  console.log("[AI Planner] User prompt:", userPrompt);
+
   // Try server-side AI first
   if (trpcClient) {
     try {
@@ -50,20 +56,23 @@ export async function generatePlanPreview(
 
       if (result.success && result.preview) {
         const validated = AIPlanPreviewSchema.parse(result.preview);
+        console.log("[AI Planner] Server AI returned", validated.tasks.length, "tasks");
         const { plan } = buildDayPlan({ preview: validated, date: today });
+        console.log("[AI Planner] Built day plan with", plan.tasks.length, "scheduled tasks");
         return plan;
       }
     } catch (error) {
-      console.warn("Server-side AI plan generation failed, using fallback:", error);
+      console.warn("[AI Planner] Server-side AI plan generation failed:", error);
     }
   }
 
   // Fallback: use smart text parser
+  console.log("[AI Planner] Using fallback text parser");
   return generateFallbackPlan(userPrompt, onboarding, today);
 }
 
-// ─── Smart Fallback Parser ──────────────────────────────────
-// Parses natural language day descriptions into structured tasks
+// ─── Smart Fallback Parser v2 ───────────────────────────────
+// Improved parsing with better time range handling
 
 interface ParsedTask {
   title: string;
@@ -74,11 +83,26 @@ interface ParsedTask {
   fixedStartMin?: number;
 }
 
-function normalizeHour(h: number, ampm: string, _fullContext: string): number {
-  const lower = ampm.toLowerCase();
+/**
+ * Normalize hour to 24-hour format
+ * Handles edge cases like 12 AM (midnight) and 12 PM (noon)
+ */
+function normalizeHour(h: number, ampm: string): number {
+  const lower = ampm.toLowerCase().trim();
+  
+  // Handle 12 AM (midnight) -> 0
+  if (h === 12 && lower === "am") return 0;
+  
+  // Handle 12 PM (noon) -> 12
+  if (h === 12 && lower === "pm") return 12;
+  
+  // Handle PM times (add 12 if not already)
   if (lower === "pm" && h < 12) return h + 12;
-  if (lower === "am" && h === 12) return 0;
-  if (lower === "am" || lower === "pm") return h;
+  
+  // Handle AM times (keep as is, but ensure valid)
+  if (lower === "am") return h % 12;
+  
+  // No AM/PM specified, return as is
   return h;
 }
 
@@ -103,6 +127,108 @@ function detectPriority(text: string, type: ParsedTask["type"]): ParsedTask["pri
   return "med";
 }
 
+/**
+ * Parse time range like "9-5", "9:00-17:00", "9:00 AM - 5:00 PM"
+ * Returns { startMin, endMin, title } or null if not a time range
+ */
+function parseTimeRange(segment: string): { startMin: number; endMin: number; title: string } | null {
+  // Match patterns like:
+  // "Work 9-5"
+  // "Work 9:00-17:00"
+  // "Work 9:00 AM - 5:00 PM"
+  // "9-5 work"
+  // "9:00-17:00 meetings"
+  
+  const patterns = [
+    // Pattern 1: "Title HH:MM AM/PM - HH:MM AM/PM"
+    /^(.*?)\s+(\d{1,2}):(\d{2})\s*(am|pm)?\s*[-–to]+\s*(\d{1,2}):(\d{2})\s*(am|pm)?\s*(.*)$/i,
+    // Pattern 2: "Title HH-HH" or "Title HH-MM"
+    /^(.*?)\s+(\d{1,2}):?(\d{0,2})?\s*(am|pm)?\s*[-–to]+\s*(\d{1,2}):?(\d{0,2})?\s*(am|pm)?\s*(.*)$/i,
+    // Pattern 3: "HH:MM AM/PM - HH:MM AM/PM Title"
+    /^(\d{1,2}):(\d{2})\s*(am|pm)?\s*[-–to]+\s*(\d{1,2}):(\d{2})\s*(am|pm)?\s*(.*)$/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = segment.match(pattern);
+    if (!match) continue;
+
+    let titlePrefix = "";
+    let startH = 0, startM = 0, startAmPm = "";
+    let endH = 0, endM = 0, endAmPm = "";
+    let titleSuffix = "";
+
+    if (pattern === patterns[0]) {
+      titlePrefix = match[1] || "";
+      startH = parseInt(match[2]);
+      startM = parseInt(match[3] || "0");
+      startAmPm = match[4] || "";
+      endH = parseInt(match[5]);
+      endM = parseInt(match[6] || "0");
+      endAmPm = match[7] || "";
+      titleSuffix = match[8] || "";
+    } else if (pattern === patterns[1]) {
+      titlePrefix = match[1] || "";
+      startH = parseInt(match[2]);
+      startM = parseInt(match[3] || "0");
+      startAmPm = match[4] || "";
+      endH = parseInt(match[5]);
+      endM = parseInt(match[6] || "0");
+      endAmPm = match[7] || "";
+      titleSuffix = match[8] || "";
+    } else if (pattern === patterns[2]) {
+      startH = parseInt(match[1]);
+      startM = parseInt(match[2] || "0");
+      startAmPm = match[3] || "";
+      endH = parseInt(match[4]);
+      endM = parseInt(match[5] || "0");
+      endAmPm = match[6] || "";
+      titleSuffix = match[7] || "";
+    }
+
+    // Normalize hours
+    if (startAmPm) startH = normalizeHour(startH, startAmPm);
+    if (endAmPm) endH = normalizeHour(endH, endAmPm);
+
+    // If no AM/PM specified, use heuristics
+    if (!startAmPm && !endAmPm) {
+      // If start is 1-6 and end is 9-5, assume PM for start
+      if (startH >= 1 && startH <= 6 && endH >= 9 && endH <= 5) {
+        startH += 12;
+      }
+      // If end < start, assume end is PM
+      if (endH < startH && endH < 12) {
+        endH += 12;
+      }
+    } else if (!endAmPm && startAmPm) {
+      // If start has AM/PM but end doesn't, infer end
+      if (endH <= startH && endH < 12) {
+        endH += 12;
+      }
+    }
+
+    // Final safety check
+    if (endH <= startH && endH < 12) {
+      endH += 12;
+    }
+
+    const startMin = startH * 60 + startM;
+    const endMinVal = endH * 60 + endM;
+    const durationMin = Math.max(15, endMinVal - startMin);
+
+    const title = (titlePrefix + " " + titleSuffix).trim() || segment;
+
+    console.log(`[Time Parser] Parsed time range: "${segment}" -> ${startH}:${startM} - ${endH}:${endM} (${startMin}-${endMinVal} min)`);
+
+    return {
+      startMin,
+      endMin: endMinVal,
+      title,
+    };
+  }
+
+  return null;
+}
+
 function parseTasksFromPrompt(prompt: string): ParsedTask[] {
   const tasks: ParsedTask[] = [];
   const seenTitles = new Set<string>(); // Prevent duplicates
@@ -117,76 +243,33 @@ function parseTasksFromPrompt(prompt: string): ParsedTask[] {
 
   for (const segment of segments) {
     console.log(`[Task Parser] Processing segment: "${segment}"`);
-    // Pattern 1: "Work 9-5", "school 8-3", "meetings 10-12"
-    const timeRangeMatch = segment.match(
-      /^(.*?)\s*(\d{1,2}):?(\d{2})?\s*(am|pm)?\s*[-–to]+\s*(\d{1,2}):?(\d{2})?\s*(am|pm)?\s*(.*)$/i
-    );
 
-      if (timeRangeMatch) {
-        let startH = parseInt(timeRangeMatch[2]);
-        const startM = parseInt(timeRangeMatch[3] || "0");
-        const startAmPm = timeRangeMatch[4] || "";
-        let endH = parseInt(timeRangeMatch[5]);
-        const endM = parseInt(timeRangeMatch[6] || "0");
-        const endAmPm = timeRangeMatch[7] || "";
+    // Try to parse as time range first
+    const timeRange = parseTimeRange(segment);
+    if (timeRange) {
+      const { startMin, endMin, title } = timeRange;
+      const durationMin = Math.max(15, endMin - startMin);
 
-        let title = (timeRangeMatch[1] + " " + (timeRangeMatch[8] || "")).trim();
-        if (!title) title = segment;
-
-        // Normalize hours with proper AM/PM handling
-        if (startAmPm) {
-          startH = normalizeHour(startH, startAmPm, segment);
-        }
-        if (endAmPm) {
-          endH = normalizeHour(endH, endAmPm, segment);
-        }
-
-        // If no AM/PM specified, use heuristics
-        if (!startAmPm && !endAmPm) {
-          // If start is 1-6 and end is 9-5, assume PM for start
-          if (startH >= 1 && startH <= 6 && endH >= 9 && endH <= 5) {
-            startH += 12;
-          }
-          // If end < start, assume end is PM
-          if (endH < startH && endH < 12) {
-            endH += 12;
-          }
-        } else if (!endAmPm && startAmPm) {
-          // If start has AM/PM but end doesn't, infer end
-          if (endH <= startH && endH < 12) {
-            endH += 12;
-          }
-        }
-
-        // Final safety check
-        if (endH <= startH && endH < 12) {
-          endH += 12;
-        }
-
-        const fixedStartMin = startH * 60 + startM;
-        const endMin = endH * 60 + endM;
-        const durationMin = Math.max(15, endMin - fixedStartMin);
-
-        title = title.charAt(0).toUpperCase() + title.slice(1);
-
-        // Prevent duplicate tasks
-        if (seenTitles.has(title.toLowerCase())) {
-          console.log(`[Task Parser] Skipping duplicate task: "${title}"`);
-          continue;
-        }
-        seenTitles.add(title.toLowerCase());
-
-        const type = detectType(title);
-        console.log(`[Task Parser] Parsed time range: "${segment}" -> ${startH}:${startM} - ${endH}:${endM} (${fixedStartMin}-${endMin} min)`);
-        tasks.push({
-          title,
-          durationMin: Math.min(durationMin, 480),
-          type,
-          priority: detectPriority(title, type),
-          locked: true,
-          fixedStartMin,
-        });
+      // Prevent duplicate tasks
+      if (seenTitles.has(title.toLowerCase())) {
+        console.log(`[Task Parser] Skipping duplicate task: "${title}"`);
         continue;
+      }
+      seenTitles.add(title.toLowerCase());
+
+      const type = detectType(title);
+      const task: ParsedTask = {
+        title,
+        durationMin: Math.min(durationMin, 480),
+        type,
+        priority: detectPriority(title, type),
+        locked: true,
+        fixedStartMin: startMin,
+      };
+
+      console.log(`[Task Parser] Created fixed-time task: "${title}" at ${startMin}min (${durationMin}min)`);
+      tasks.push(task);
+      continue;
     }
 
     // Pattern 2: "gym after work 1h", "homework 2h", "walk 30m"

@@ -1,11 +1,12 @@
 /**
- * Sleepline — Global State Store (Zustand + localStorage) v2
+ * Sleepline — Global State Store v2 (Fixed)
  * 
- * FIXED: Immutable state management with defensive logic
- * - Deep cloning plans to prevent overwrites
- * - Validation to prevent overlapping tasks
- * - Comprehensive logging for debugging
- * - Proper task merging instead of replacement
+ * Improvements:
+ * 1. Immutable state updates with deep cloning
+ * 2. Defensive logic to prevent task overwrites
+ * 3. Validation to prevent overlapping tasks
+ * 4. Comprehensive logging for debugging
+ * 5. Proper task merging instead of replacement
  */
 
 import { create } from "zustand";
@@ -29,37 +30,37 @@ interface FocusTimer {
 }
 
 interface SleeplineState {
-  // ─── User ────────────────────────────────────────
+  // ─── User ────────────────────────────────────
   user: UserProfile | null;
   setUser: (user: UserProfile) => void;
   updateOnboarding: (onboarding: Partial<Onboarding>) => void;
   updateReminderSettings: (settings: Partial<ReminderSettings>) => void;
 
-  // ─── Navigation State ────────────────────────────
+  // ─── Navigation State ────────────────────────
   currentPage: "onboarding" | "checkin" | "dashboard" | "history" | "settings";
   setPage: (page: SleeplineState["currentPage"]) => void;
 
-  // ─── Check-ins ───────────────────────────────────
+  // ─── Check-ins ───────────────────────────────
   checkIns: CheckIn[];
   todayCheckIn: () => CheckIn | undefined;
   addCheckIn: (checkIn: Omit<CheckIn, "id" | "createdAt">) => void;
 
-  // ─── Day Plans ───────────────────────────────────
+  // ─── Day Plans ───────────────────────────────
   plans: DayPlan[];
   todayPlan: () => DayPlan | undefined;
   previewPlan: DayPlan | null;
   setPreviewPlan: (plan: DayPlan | null) => void;
   applyPlan: (plan: DayPlan) => void;
 
-  // ─── Tasks ───────────────────────────────────────
+  // ─── Tasks ───────────────────────────────────
   updateTask: (taskId: string, updates: Partial<Task>) => void;
   completeTask: (taskId: string) => void;
   snoozeTask: (taskId: string, minutes: number) => void;
 
-  // ─── Sleep Options ───────────────────────────────
+  // ─── Sleep Options ───────────────────────────
   selectSleepOption: (optionId: string) => void;
 
-  // ─── Focus Timer ─────────────────────────────────
+  // ─── Focus Timer ─────────────────────────────
   focusTimer: FocusTimer | null;
   startFocus: (taskId: string) => void;
   pauseFocus: () => void;
@@ -67,12 +68,12 @@ interface SleeplineState {
   stopFocus: () => void;
   tickFocus: () => void;
 
-  // ─── AI Chat Messages ────────────────────────────
+  // ─── AI Chat Messages ────────────────────────
   aiMessages: Array<{ role: "user" | "assistant"; content: string; timestamp: string }>;
   addAiMessage: (role: "user" | "assistant", content: string) => void;
   clearAiMessages: () => void;
 
-  // ─── Reset ───────────────────────────────────────
+  // ─── Reset ───────────────────────────────────
   resetAll: () => void;
 }
 
@@ -200,6 +201,10 @@ export const useStore = create<SleeplineState>()(
 
       setPreviewPlan: (plan) => {
         if (plan) {
+          const validation = validatePlanConsistency(plan);
+          if (!validation.valid) {
+            console.warn("[Store] Preview plan has issues:", validation.errors);
+          }
           console.log("[Store] Setting preview plan with", plan.tasks.length, "tasks");
         } else {
           console.log("[Store] Clearing preview plan");
@@ -269,7 +274,7 @@ export const useStore = create<SleeplineState>()(
       },
 
       snoozeTask: (taskId, minutes) => {
-        console.log("[Store] Snoozing task", taskId, "by", minutes, "minutes");
+        console.log("[Store] Snoozing task", taskId, 'by', minutes, 'minutes');
 
         set(s => {
           const newPlans = s.plans.map(p => {
@@ -302,7 +307,7 @@ export const useStore = create<SleeplineState>()(
 
       selectSleepOption: (optionId) => {
         const today = todayStr();
-        console.log("[Store] Selecting sleep option", optionId, "for", today);
+        console.log("[Store] Selecting sleep option", optionId, 'for', today);
 
         set(s => ({
           plans: s.plans.map(p => {
@@ -328,7 +333,7 @@ export const useStore = create<SleeplineState>()(
         }
 
         const totalSec = (task.endMin - task.startMin) * 60;
-        console.log("[Store] Starting focus on task", taskId, "for", totalSec, "seconds");
+        console.log("[Store] Starting focus on task', taskId, 'for', totalSec, 'seconds");
 
         set({
           focusTimer: {
