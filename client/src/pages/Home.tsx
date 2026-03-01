@@ -27,6 +27,13 @@ export default function Home() {
         {/* Hero Section */}
         <div className="flex-1 flex items-center justify-center px-4 py-12">
           <div className="max-w-2xl text-center">
+            {/* Logo */}
+            <img
+              src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663348473965/FDucuNzKCkcLrRaH.png"
+              alt="Sleepline logo"
+              className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-8"
+            />
+
             {/* H1 - Main heading for SEO */}
             <h1 className="text-5xl md:text-6xl font-bold mb-6 text-white">
               Sleepline

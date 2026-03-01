@@ -4,7 +4,7 @@
  */
 
 import { useStore } from "@/lib/store";
-import { Moon, LayoutDashboard, History, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, History, Settings, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function NavHeader() {
@@ -27,9 +27,11 @@ export default function NavHeader() {
     >
       {/* Brand */}
       <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--sl-glow-periwinkle)] to-[var(--sl-glow-cyan)] flex items-center justify-center">
-          <Moon className="w-4 h-4 text-white" />
-        </div>
+        <img
+          src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663348473965/FDucuNzKCkcLrRaH.png"
+          alt="Sleepline logo"
+          className="w-8 h-8 rounded-lg"
+        />
         <div>
           <h1 className="text-sm font-bold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
             Sleepline
