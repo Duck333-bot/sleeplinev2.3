@@ -40,3 +40,17 @@
 - [ ] Add logging around task creation, update, delete events
 - [ ] Verify tasks use stable unique IDs and aren't overwritten by index-based updates
 - [ ] Test task creation, updates, and multiple edits to ensure consistency
+
+
+## Deterministic Scheduling Engine (v3)
+
+- [ ] Implement patch-based scheduler (not rebuild) with generate/edit modes
+- [ ] Add 24-hour minute-based time handling (0-1440 minutes)
+- [ ] Implement sleep integrity rules (never remove/shorten sleep block)
+- [ ] Add fixed block rules (cannot move/resize if fixed=true)
+- [ ] Implement overlap resolution with conflict reporting
+- [ ] Update AI planner to extract intent only (not time math)
+- [ ] Add comprehensive scheduling tests (clock logic, bedtime, pre-sleep stacking)
+- [ ] Test overlap detection and conflict reporting
+- [ ] Verify time integrity across all scenarios
+- [ ] Test AM/PM handling and bedtime context awareness
