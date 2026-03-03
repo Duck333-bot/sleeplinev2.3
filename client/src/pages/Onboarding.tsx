@@ -101,9 +101,11 @@ export default function OnboardingPage() {
             {step === 0 && (
               <StepWrapper key="step0">
                 <div className="text-center mb-6">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--sl-glow-periwinkle)] to-[var(--sl-glow-cyan)] flex items-center justify-center mx-auto mb-4">
-                    <Moon className="w-8 h-8 text-white" />
-                  </div>
+                  <img
+                    src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663348473965/TsKeQAKOxRVhYDWK.png"
+                    alt="Sleepline logo"
+                    className="w-16 h-16 mx-auto mb-4"
+                  />
                   <h2 className="text-xl font-bold mb-2" style={{ fontFamily: "var(--font-heading)" }}>
                     Welcome to Sleepline
                   </h2>
