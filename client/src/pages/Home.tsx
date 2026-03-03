@@ -29,7 +29,7 @@ export default function Home() {
           <div className="max-w-2xl text-center">
             {/* Logo */}
             <img
-              src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663348473965/FDucuNzKCkcLrRaH.png"
+              src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663348473965/TsKeQAKOxRVhYDWK.png"
               alt="Sleepline logo"
               className="w-24 h-24 md:w-32 md:h-32 mx-auto mb-8"
             />

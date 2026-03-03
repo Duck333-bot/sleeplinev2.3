@@ -28,7 +28,7 @@ export default function NavHeader() {
       {/* Brand */}
       <div className="flex items-center gap-2.5">
         <img
-          src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663348473965/FDucuNzKCkcLrRaH.png"
+          src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663348473965/TsKeQAKOxRVhYDWK.png"
           alt="Sleepline logo"
           className="w-8 h-8 rounded-lg"
         />
