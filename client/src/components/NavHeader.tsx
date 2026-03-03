@@ -21,8 +21,14 @@ export default function NavHeader() {
 
   return (
     <motion.header
-      initial={{ opacity: 0, y: -10 }}
+      initial={{ opacity: 0, y: -15 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.4,
+        ease: "easeOut",
+        opacity: { duration: 0.3 },
+        y: { type: "spring", stiffness: 120, damping: 20 },
+      }}
       className="glass-card px-4 py-2.5 flex items-center justify-between"
     >
       {/* Brand */}

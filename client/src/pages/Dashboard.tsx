@@ -48,8 +48,14 @@ export default function Dashboard() {
     <div className="space-y-5">
       {/* Greeting bar */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.4,
+          ease: "easeOut",
+          opacity: { duration: 0.3 },
+          y: { type: "spring", stiffness: 100, damping: 15 },
+        }}
         className="flex items-center justify-between"
       >
         <div>
