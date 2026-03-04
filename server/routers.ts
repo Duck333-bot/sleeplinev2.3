@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { aiRouter } from "./ai-planner";
 import { dataRouter } from "./data-router";
+import { taskRouter } from "./task-router";
 
 export const appRouter = router({
   system: systemRouter,
@@ -19,6 +20,7 @@ export const appRouter = router({
   }),
   ai: aiRouter,
   data: dataRouter,
+  task: taskRouter,
 });
 
 export type AppRouter = typeof appRouter;
