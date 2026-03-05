@@ -77,3 +77,11 @@
 - [x] Write comprehensive tests for conflict detection and resolution (27 tests)
 - [x] Verify integration and test end-to-end (141 total tests passing)
 - [ ] Save checkpoint and deliver feature
+
+
+## Energy Zones Feature
+- [x] Create energy zone utility with sleep science algorithm
+- [x] Add energy zone visualization to schedule timeline
+- [x] Write tests for energy zone calculations (46 tests)
+- [x] Verify UI integration and visual appearance (187 total tests passing)
+- [ ] Save checkpoint and deliver feature
