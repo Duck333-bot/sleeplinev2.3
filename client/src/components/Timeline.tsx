@@ -5,7 +5,7 @@
  * Quick actions: Start Focus, Complete, Snooze, Edit
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useStore, getTimelineItems, getUnscheduledTasks } from "@/lib/store";
 import { minToDisplay, durationDisplay } from "@/lib/schemas";
 import type { Task, SystemBlock } from "@/lib/schemas";
@@ -13,8 +13,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Play, CheckCircle2, Clock, Pause,
   Coffee, Moon, Sun, Utensils, Zap, Timer, Sparkles,
-  ArrowRight, CalendarClock
+  ArrowRight, CalendarClock, Plus
 } from "lucide-react";
+import ManualTaskForm from "./ManualTaskForm";
 
 function isTask(item: any): item is Task & { itemType: "task" } {
   return item.itemType === "task";
@@ -40,6 +41,7 @@ const priorityColors: Record<string, string> = {
 };
 
 export default function Timeline() {
+  const [manualTaskOpen, setManualTaskOpen] = useState(false);
   const todayPlan = useStore(s => s.todayPlan());
   const focusTimer = useStore(s => s.focusTimer);
   const startFocus = useStore(s => s.startFocus);
@@ -53,6 +55,18 @@ export default function Timeline() {
   const unscheduled = useMemo(() => getUnscheduledTasks(todayPlan), [todayPlan]);
   const now = new Date();
   const currentMin = now.getHours() * 60 + now.getMinutes();
+
+  const handleAddTask = (task: Task) => {
+    if (!todayPlan) return;
+    // Add the task to the plan by updating the store
+    const updatedPlan = {
+      ...todayPlan,
+      tasks: [...todayPlan.tasks, task],
+    };
+    useStore.setState(s => ({
+      plans: s.plans.map(p => p.id === todayPlan.id ? updatedPlan : p),
+    }));
+  };
 
   if (!todayPlan) {
     return (
@@ -75,14 +89,24 @@ export default function Timeline() {
 
   return (
     <div className="space-y-1">
-      {/* Header */}
+      {/* Header with Add Task Button */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-xs font-semibold tracking-[0.15em] uppercase text-[var(--sl-text-muted)]" style={{ fontFamily: "var(--font-heading)" }}>
           Today's Timeline
         </h3>
-        <span className="text-[10px] text-[var(--sl-text-muted)] tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>
-          {completedCount}/{totalTasks} done
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setManualTaskOpen(true)}
+            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-full bg-[var(--sl-glow-periwinkle)]/10 text-[var(--sl-glow-periwinkle)] hover:bg-[var(--sl-glow-periwinkle)]/20 transition-colors"
+            title="Add task manually"
+          >
+            <Plus className="w-3 h-3" />
+            Add
+          </button>
+          <span className="text-[10px] text-[var(--sl-text-muted)] tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>
+            {completedCount}/{totalTasks} done
+          </span>
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -240,6 +264,13 @@ export default function Timeline() {
           ))}
         </div>
       )}
+
+      {/* Manual Task Form Modal */}
+      <ManualTaskForm
+        open={manualTaskOpen}
+        onOpenChange={setManualTaskOpen}
+        onTaskCreate={handleAddTask}
+      />
     </div>
   );
 }
