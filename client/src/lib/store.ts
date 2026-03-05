@@ -50,6 +50,7 @@ interface SleeplineState {
   previewPlan: DayPlan | null;
   setPreviewPlan: (plan: DayPlan | null) => void;
   applyPlan: (plan: DayPlan) => void;
+  applyTemplate: (templateId: string) => void;
 
   // ─── Tasks ───────────────────────────────────────
   updateTask: (taskId: string, updates: Partial<Task>) => void;
@@ -147,6 +148,32 @@ export const useStore = create<SleeplineState>()(
       setUser: (user) => {
         console.log("[Store] Setting user:", user.name);
         set({ user });
+      },
+
+      applyTemplate: (templateId) => {
+        const { getTemplateById, templateToBlocks } = require('./day-templates');
+        const template = getTemplateById(templateId);
+        if (!template) {
+          console.error('[Store] Template not found:', templateId);
+          return;
+        }
+
+        const today = todayStr();
+        const blocks = templateToBlocks(template);
+        const newPlan = {
+          id: nanoid(),
+          date: today,
+          tasks: [],
+          systemBlocks: blocks,
+          sleepOptions: [],
+          selectedSleepOptionId: null,
+          warnings: [],
+          createdAt: new Date().toISOString(),
+          appliedAt: new Date().toISOString(),
+        };
+
+        console.log('[Store] Applying template:', templateId, 'with', blocks.length, 'blocks');
+        get().applyPlan(newPlan);
       },
 
       updateOnboarding: (onboarding) => {

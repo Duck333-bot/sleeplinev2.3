@@ -85,3 +85,11 @@
 - [x] Write tests for energy zone calculations (46 tests)
 - [x] Verify UI integration and visual appearance (187 total tests passing)
 - [ ] Save checkpoint and deliver feature
+
+
+## One-Tap Day Templates
+- [x] Create template data structure and utility functions
+- [x] Build DayTemplatesCard UI component with 3 template buttons
+- [x] Implement template application logic with conflict detection
+- [x] Add confirmation modal and test end-to-end
+- [ ] Save checkpoint and deliver feature
