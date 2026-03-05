@@ -7,6 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { dayPlans } from "../drizzle/schema";
 import { getDb } from "./db";
 import type { Task } from "../client/src/lib/schemas";
+import { processTasksForConflicts } from "./lib/conflict-resolution-integration";
 
 /**
  * Update a single task within a day plan by ID (patch-based, not full overwrite)

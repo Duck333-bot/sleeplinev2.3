@@ -69,3 +69,11 @@
 - [x] Write comprehensive tests for scoring utility (23 tests)
 - [x] Integrate with existing check-in data via tRPC procedures
 - [x] All 114 tests passing, zero TypeScript errors
+
+
+## Schedule Conflict Detection & Resolution
+- [x] Create conflict detection and auto-resolution utility functions
+- [x] Integrate conflict detection into task scheduler
+- [x] Write comprehensive tests for conflict detection and resolution (27 tests)
+- [x] Verify integration and test end-to-end (141 total tests passing)
+- [ ] Save checkpoint and deliver feature
