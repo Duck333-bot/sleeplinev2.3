@@ -15,6 +15,7 @@ import type {
   UserProfile, Onboarding, CheckIn, DayPlan, Task,
   SystemBlock, SleepOption, ReminderSettings
 } from "./schemas";
+import { sortTasksByTime, sortBlocksByTime } from "./sort-tasks";
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
@@ -228,13 +229,17 @@ export const useStore = create<SleeplineState>()(
       setPreviewPlan: (plan) => {
         if (plan) {
           console.log("[Store] Setting preview plan with", plan.tasks.length, "tasks");
+          const sortedPlan = clonePlan(plan);
+          sortedPlan.tasks = sortTasksByTime(sortedPlan.tasks);
+          sortedPlan.systemBlocks = sortBlocksByTime(sortedPlan.systemBlocks);
+          set({ previewPlan: sortedPlan });
         } else {
           console.log("[Store] Clearing preview plan");
+          set({ previewPlan: null });
         }
-        set({ previewPlan: plan ? clonePlan(plan) : null });
       },
 
-      applyPlan: (plan) => {
+       applyPlan: (plan) => {
         const validation = validatePlanConsistency(plan);
         if (!validation.valid) {
           console.error("[Store] Cannot apply invalid plan:", validation.errors);
@@ -246,8 +251,11 @@ export const useStore = create<SleeplineState>()(
           appliedAt: new Date().toISOString(),
         });
 
-        console.log("[Store] Applying plan for", plan.date, "with", appliedPlan.tasks.length, "tasks");
+        // Sort tasks and blocks by time
+        appliedPlan.tasks = sortTasksByTime(appliedPlan.tasks);
+        appliedPlan.systemBlocks = sortBlocksByTime(appliedPlan.systemBlocks);
 
+        console.log("[Store] Applying plan for", plan.date, "with", appliedPlan.tasks.length, "tasks");
         set(s => {
           // Remove any unapplied preview plans for this date, keep applied plans
           const filteredPlans = s.plans.filter(p => p.date !== plan.date || p.appliedAt !== null);
@@ -272,6 +280,9 @@ export const useStore = create<SleeplineState>()(
             updatedPlan.tasks = updatedPlan.tasks.map(t =>
               t.id === taskId ? { ...t, ...updates } : t
             );
+
+            // Sort tasks after update
+            updatedPlan.tasks = sortTasksByTime(updatedPlan.tasks);
 
             // Validate after update
             const validation = validatePlanConsistency(updatedPlan);
@@ -313,6 +324,9 @@ export const useStore = create<SleeplineState>()(
                 status: "snoozed" as const,
               };
             });
+
+            // Sort tasks after snooze
+            updatedPlan.tasks = sortTasksByTime(updatedPlan.tasks);
 
             // Validate after snooze
             const validation = validatePlanConsistency(updatedPlan);

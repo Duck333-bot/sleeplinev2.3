@@ -93,3 +93,10 @@
 - [x] Implement template application logic with conflict detection
 - [x] Add confirmation modal and test end-to-end
 - [ ] Save checkpoint and deliver feature
+
+## Automatic Task Sorting
+- [x] Create sortTasksByTime utility function
+- [x] Create sortBlocksByTime utility function
+- [x] Integrate sorting into store (applyPlan, updateTask, snoozeTask, setPreviewPlan)
+- [x] Add comprehensive test coverage (6 tests passing)
+- [ ] Save checkpoint and deliver feature
