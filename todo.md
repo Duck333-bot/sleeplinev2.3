@@ -54,3 +54,18 @@
 - [ ] Test overlap detection and conflict reporting
 - [ ] Verify time integrity across all scenarios
 - [ ] Test AM/PM handling and bedtime context awareness
+
+## Daily Sleep Score Feature
+- [ ] Create sleep score utility with scoring logic and feedback generation
+- [ ] Add Sleep Score UI component to homepage
+- [ ] Write comprehensive tests for scoring utility
+- [ ] Integrate with existing check-in data and verify end-to-end
+- [ ] Save checkpoint and deliver feature
+
+
+## Daily Sleep Score Feature (COMPLETED)
+- [x] Create sleep score utility with scoring logic and feedback generation
+- [x] Add Sleep Score UI component to homepage
+- [x] Write comprehensive tests for scoring utility (23 tests)
+- [x] Integrate with existing check-in data via tRPC procedures
+- [x] All 114 tests passing, zero TypeScript errors
