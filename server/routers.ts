@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { aiRouter } from "./ai-planner";
 import { aiDayPlannerRouter } from "./ai-day-planner-router";
+import { dayReviewRouter } from "./day-review-router";
 import { dataRouter } from "./data-router";
 import { taskRouter } from "./task-router";
 
@@ -21,6 +22,7 @@ export const appRouter = router({
   }),
   ai: aiRouter,
   aiDayPlanner: aiDayPlannerRouter,
+  dayReview: dayReviewRouter,
   data: dataRouter,
   task: taskRouter,
 });

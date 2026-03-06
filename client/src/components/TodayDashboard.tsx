@@ -17,6 +17,7 @@
 
 import { useMemo } from "react";
 import { useStore } from "@/lib/store";
+import TodaysReview from "./TodaysReview";
 import {
   getNextTask,
   getDailyProgress,
@@ -246,29 +247,42 @@ export default function TodayDashboard() {
         </motion.div>
       </div>
 
-      {/* Row 3: Timeline Preview (full width) */}
-      {timelinePreview.length > 0 && (
+      {/* Row 3: Timeline Preview + Today's Review */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Timeline Preview */}
+        {timelinePreview.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="p-4 rounded-xl bg-gradient-to-br from-white/[0.05] to-white/[0.02] border border-white/[0.08]"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-[var(--sl-glow-cyan)]/15 flex items-center justify-center">
+                <Clock className="w-4 h-4 text-[var(--sl-glow-cyan)]" />
+              </div>
+              <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--sl-text-muted)]" style={{ fontFamily: "var(--font-heading)" }}>
+                Today Timeline
+              </h3>
+            </div>
+            <div className="space-y-2">
+              {timelinePreview.map((task, i) => (
+                <TimelinePreviewItem key={task.id} task={task} isActive={focusTimer?.taskId === task.id} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Today's Review */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
+          transition={{ delay: 0.3 }}
           className="p-4 rounded-xl bg-gradient-to-br from-white/[0.05] to-white/[0.02] border border-white/[0.08]"
         >
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-[var(--sl-glow-cyan)]/15 flex items-center justify-center">
-              <Clock className="w-4 h-4 text-[var(--sl-glow-cyan)]" />
-            </div>
-            <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--sl-text-muted)]" style={{ fontFamily: "var(--font-heading)" }}>
-              Today Timeline
-            </h3>
-          </div>
-          <div className="space-y-2">
-            {timelinePreview.map((task, i) => (
-              <TimelinePreviewItem key={task.id} task={task} isActive={focusTimer?.taskId === task.id} />
-            ))}
-          </div>
+          <TodaysReview />
         </motion.div>
-      )}
+      </div>
     </motion.div>
   );
 }
