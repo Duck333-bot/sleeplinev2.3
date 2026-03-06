@@ -16,6 +16,7 @@ import type {
   SystemBlock, SleepOption, ReminderSettings
 } from "./schemas";
 import { sortTasksByTime, sortBlocksByTime } from "./sort-tasks";
+import { normalizePlan, validatePlan } from "./plan-normalization";
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
@@ -240,14 +241,18 @@ export const useStore = create<SleeplineState>()(
       },
 
        applyPlan: (plan) => {
-        const validation = validatePlanConsistency(plan);
+        // Normalize plan to remove duplicates and invalid items
+        const normalizedPlan = normalizePlan(plan);
+        
+        // Validate normalized plan
+        const validation = validatePlan(normalizedPlan);
         if (!validation.valid) {
           console.error("[Store] Cannot apply invalid plan:", validation.errors);
           return;
         }
 
         const appliedPlan = clonePlan({
-          ...plan,
+          ...normalizedPlan,
           appliedAt: new Date().toISOString(),
         });
 

@@ -1,0 +1,34 @@
+IMPROVED applyPlan METHOD:
+
+Replace lines 243-268 in client/src/lib/store.ts with:
+
+      applyPlan: (plan) => {
+        // Normalize plan to remove duplicates and invalid items
+        const normalizedPlan = normalizePlan(plan);
+        
+        // Validate normalized plan
+        const validation = validatePlan(normalizedPlan);
+        if (!validation.valid) {
+          console.error("[Store] Cannot apply invalid plan:", validation.errors);
+          return;
+        }
+
+        const appliedPlan = clonePlan({
+          ...normalizedPlan,
+          appliedAt: new Date().toISOString(),
+        });
+
+        // Sort tasks and blocks by time
+        appliedPlan.tasks = sortTasksByTime(appliedPlan.tasks);
+        appliedPlan.systemBlocks = sortBlocksByTime(appliedPlan.systemBlocks);
+
+        console.log("[Store] Applying plan for", plan.date, "with", appliedPlan.tasks.length, "tasks");
+        set(s => {
+          // Remove any unapplied preview plans for this date, keep applied plans
+          const filteredPlans = s.plans.filter(p => p.date !== plan.date || p.appliedAt !== null);
+          return {
+            plans: [...filteredPlans, appliedPlan],
+            previewPlan: null,
+          };
+        });
+      },
