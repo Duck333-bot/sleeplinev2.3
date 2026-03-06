@@ -56,7 +56,7 @@ export default function OptimizationPreview({
                 Optimized Schedule
               </h2>
               <p className="text-xs text-[var(--sl-text-muted)]" style={{ fontFamily: "var(--font-body)" }}>
-                AI-powered reorganization for better focus and energy
+                Reorganized for better focus, energy, and sleep
               </p>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function OptimizationPreview({
             {isApplying ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Applying...</span>
+                <span>Applying optimization...</span>
               </>
             ) : (
               <>

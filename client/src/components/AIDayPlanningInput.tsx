@@ -59,18 +59,19 @@ export default function AIDayPlanningInput({
     onSuccess: (result) => {
       setIsLoading(false);
       if (result.success && result.plan) {
-        toast.success("Plan generated! Review and apply below.");
+        toast.success("Your plan is ready", { description: "Review and apply to your day" });
         onPlanGenerated?.(result.plan);
         setInput("");
         setError(null);
       } else {
-        setError(result.error || "Failed to generate plan");
-        toast.error(result.error || "Failed to generate plan");
+        const errorMsg = result.error || "We couldn't generate that just now";
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     },
     onError: (error) => {
       setIsLoading(false);
-      const message = error.message || "Failed to generate plan";
+      const message = error.message || "We couldn't generate that just now";
       setError(message);
       toast.error(message);
     },
@@ -81,12 +82,12 @@ export default function AIDayPlanningInput({
     const text = input.trim();
 
     if (!text) {
-      setError("Please describe what you need to do today");
+      setError("Tell us what you need to do today");
       return;
     }
 
     if (text.length < 10) {
-      setError("Please provide more detail about your day");
+      setError("Add a bit more detail so we can build the best plan");
       return;
     }
 
@@ -180,7 +181,7 @@ export default function AIDayPlanningInput({
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Generating plan...</span>
+                <span>Building your day plan...</span>
               </>
             ) : (
               <>

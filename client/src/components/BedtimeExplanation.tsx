@@ -74,7 +74,7 @@ export default function BedtimeExplanation({
           <div className="flex items-center gap-2">
             <Loader2 className="w-3 h-3 text-[var(--sl-glow-periwinkle)] animate-spin" />
             <p className="text-[11px] text-[var(--sl-text-muted)] italic">
-              Generating explanation...
+              Preparing your recommendation...
             </p>
           </div>
         ) : error ? (

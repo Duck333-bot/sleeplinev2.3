@@ -66,11 +66,11 @@ export default function AIPlanPanel() {
       );
 
       setPreviewPlan(plan);
-      addAiMessage("assistant", `I've structured your day with ${plan.tasks.length} tasks and ${plan.systemBlocks.length} breaks. Review below and apply when ready.`);
+      addAiMessage("assistant", `Plan ready with ${plan.tasks.length} tasks and ${plan.systemBlocks.length} breaks. Review and apply when it feels right.`);
     } catch (error) {
       console.error("Plan generation failed:", error);
-      addAiMessage("assistant", "I couldn't generate a plan from that description. Try including specific times or tasks.");
-      toast.error("Plan generation failed. Please try again.");
+      addAiMessage("assistant", "We couldn't generate that plan. Try adding more details about your day.");
+      toast.error("We couldn't generate that just now. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -124,7 +124,7 @@ export default function AIPlanPanel() {
           >
             <div className="p-4 rounded-xl bg-gradient-to-br from-white/[0.04] to-white/[0.02] border border-white/[0.06]">
               <p className="text-xs text-[var(--sl-text-muted)] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-                Describe your day — classes, work hours, exercise, meals — and I'll build a structured schedule with breaks and wind-down time.
+                Tell Sleepline what you need to do, and it will build a sleep-optimized plan around your schedule.
               </p>
             </div>
 
@@ -171,7 +171,7 @@ export default function AIPlanPanel() {
                 </span>
               </div>
               <p className="text-xs text-[var(--sl-text-muted)] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-                Your day has {todayPlan.tasks.length} tasks scheduled. Create a new plan anytime to adjust.
+                Your plan is active with {todayPlan.tasks.length} tasks. Generate a new plan anytime to adjust.
               </p>
             </div>
           </motion.div>

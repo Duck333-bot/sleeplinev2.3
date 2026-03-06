@@ -29,15 +29,16 @@ export default function TodaysReview({ onClose }: TodaysReviewProps) {
       if (result.success && result.review) {
         setReview(result.review);
         setError(null);
-        toast.success("Review generated!");
+        toast.success("Insight generated", { description: "See your coaching feedback below" });
       } else {
-        setError(result.error || "Failed to generate review");
-        toast.error(result.error || "Failed to generate review");
+        const errorMsg = result.error || "We couldn't generate that just now";
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     },
     onError: (error) => {
       setIsLoading(false);
-      const message = error.message || "Failed to generate review";
+      const message = error.message || "We couldn't generate that just now";
       setError(message);
       toast.error(message);
     },
@@ -52,7 +53,7 @@ export default function TodaysReview({ onClose }: TodaysReviewProps) {
 
   const handleGenerateReview = () => {
     if (!todayPlan) {
-      setError("No plan available for review");
+      setError("Generate a plan first to get your coaching insight");
       return;
     }
 
@@ -96,7 +97,7 @@ export default function TodaysReview({ onClose }: TodaysReviewProps) {
       >
         <Loader2 className="w-4 h-4 animate-spin text-[var(--sl-glow-periwinkle)]" />
         <span className="text-xs text-[var(--sl-text-muted)]" style={{ fontFamily: "var(--font-body)" }}>
-          Generating your review...
+          Reviewing your schedule...
         </span>
       </motion.div>
     );
