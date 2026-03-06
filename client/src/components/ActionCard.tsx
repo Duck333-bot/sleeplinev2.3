@@ -17,6 +17,7 @@ import {
   Zap, Moon, Battery, ArrowRight, Sparkles, Info
 } from "lucide-react";
 import { toast } from "sonner";
+import BedtimeExplanation from "./BedtimeExplanation";
 
 // ─── Plan Preview Card ─────────────────────────────────────
 
@@ -101,37 +102,37 @@ export function PlanPreviewCard({ plan }: { plan: DayPlan }) {
         </div>
       </div>
 
-      {/* Unscheduled warning */}
+      {/* Unscheduled tasks */}
       {unscheduled.length > 0 && (
-        <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[var(--sl-glow-coral)]/[0.08] border border-[var(--sl-glow-coral)]/15">
-          <AlertTriangle className="w-3.5 h-3.5 text-[var(--sl-glow-coral)] flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-[10px] font-semibold text-[var(--sl-glow-coral)]" style={{ fontFamily: "var(--font-heading)" }}>
-              {unscheduled.length} task{unscheduled.length > 1 ? "s" : ""} unscheduled
-            </p>
-            <p className="text-[9px] text-[var(--sl-text-muted)] mt-0.5" style={{ fontFamily: "var(--font-body)" }}>
-              These will appear in your inbox for manual scheduling
-            </p>
+        <div className="space-y-1.5">
+          <p className="text-[8px] font-semibold text-[var(--sl-text-muted)] uppercase tracking-[0.15em] opacity-60" style={{ fontFamily: "var(--font-heading)" }}>
+            Unscheduled
+          </p>
+          <div className="space-y-1">
+            {unscheduled.map(task => (
+              <div key={task.id} className="text-[10px] text-[var(--sl-text-muted)] opacity-50" style={{ fontFamily: "var(--font-body)" }}>
+                • {task.title}
+              </div>
+            ))}
           </div>
         </div>
       )}
 
       {/* Action buttons */}
-      <div className="flex items-center gap-2 pt-2">
+      <div className="flex gap-2 pt-2">
         <button
           onClick={handleApply}
-          className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-gradient-to-r from-[var(--sl-glow-periwinkle)]/25 to-[var(--sl-glow-cyan)]/20 text-[var(--sl-glow-periwinkle)] hover:from-[var(--sl-glow-periwinkle)]/35 hover:to-[var(--sl-glow-cyan)]/30 border border-[var(--sl-glow-periwinkle)]/20 text-xs font-semibold transition-all ring-1 ring-[var(--sl-glow-periwinkle)]/10"
-          style={{ fontFamily: "var(--font-heading)" }}
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[var(--sl-glow-mint)]/15 hover:bg-[var(--sl-glow-mint)]/25 border border-[var(--sl-glow-mint)]/30 text-[var(--sl-glow-mint)] text-[11px] font-semibold transition-colors"
         >
-          <CheckCircle2 className="w-4 h-4" /> Apply
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Apply
         </button>
         <button
           onClick={handleDiscard}
-          className="inline-flex items-center justify-center gap-1.5 py-3 px-3 rounded-lg bg-white/5 text-[var(--sl-text-muted)] hover:bg-white/10 text-xs font-medium transition-colors"
-          style={{ fontFamily: "var(--font-heading)" }}
-          title="Discard this plan"
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[var(--sl-text-muted)] text-[11px] font-semibold transition-colors"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" />
+          Discard
         </button>
       </div>
     </motion.div>
@@ -142,14 +143,14 @@ export function PlanPreviewCard({ plan }: { plan: DayPlan }) {
 
 function TaskMiniCard({ task }: { task: Task }) {
   const priorityDot: Record<string, string> = {
-    high: "bg-red-400/80",
-    med: "bg-amber-400/80",
-    low: "bg-emerald-400/80",
+    high: "bg-red-400/70",
+    med: "bg-amber-400/70",
+    low: "bg-emerald-400/70",
   };
 
   const priorityLabel: Record<string, string> = {
     high: "High",
-    med: "Med",
+    med: "Medium",
     low: "Low",
   };
 
@@ -176,7 +177,7 @@ function TaskMiniCard({ task }: { task: Task }) {
 
 // ─── Sleep Options Card ────────────────────────────────────
 
-export function SleepOptionsCard({ options, selectedId }: { options: SleepOption[]; selectedId: string | null }) {
+export function SleepOptionsCard({ options, selectedId, tasks, sleepGoal }: { options: SleepOption[]; selectedId: string | null; tasks?: Task[]; sleepGoal?: number }) {
   const selectSleepOption = useStore(s => s.selectSleepOption);
 
   const modeConfig: Record<string, { icon: React.ReactNode; color: string; label: string; gradient: string }> = {
@@ -216,29 +217,37 @@ export function SleepOptionsCard({ options, selectedId }: { options: SleepOption
           const isSelected = opt.id === selectedId;
 
           return (
-            <button
-              key={opt.id}
-              onClick={() => selectSleepOption(opt.id)}
-              className={`
-                p-3 rounded-xl transition-all text-center
-                ${isSelected
-                  ? `bg-gradient-to-br ${config.gradient} border-2 border-[${config.color}] ring-1 ring-[${config.color}]/20`
-                  : "bg-white/5 border border-white/10 hover:border-white/20"
-                }
-              `}
-            >
-              <div className="flex justify-center mb-2">
-                <div style={{ color: config.color }}>
-                  {config.icon}
+            <div key={opt.id}>
+              <button
+                onClick={() => selectSleepOption(opt.id)}
+                className={`
+                  w-full p-3 rounded-xl transition-all text-center
+                  ${isSelected
+                    ? `bg-gradient-to-br ${config.gradient} border-2 border-[${config.color}] ring-1 ring-[${config.color}]/20`
+                    : "bg-white/5 border border-white/10 hover:border-white/20"
+                  }
+                `}
+              >
+                <div className="flex justify-center mb-2">
+                  <div style={{ color: config.color }}>
+                    {config.icon}
+                  </div>
                 </div>
-              </div>
-              <p className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
-                {config.label}
-              </p>
-              <p className="text-[8px] text-[var(--sl-text-muted)] mt-1 opacity-70" style={{ fontFamily: "var(--font-body)" }}>
-                {minToDisplay(opt.bedtimeMin)}
-              </p>
-            </button>
+                <p className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+                  {config.label}
+                </p>
+                <p className="text-[8px] text-[var(--sl-text-muted)] mt-1 opacity-70" style={{ fontFamily: "var(--font-body)" }}>
+                  {minToDisplay(opt.bedtimeMin)}
+                </p>
+              </button>
+              {isSelected && tasks && sleepGoal && (
+                <BedtimeExplanation
+                  sleepOption={opt}
+                  tasks={tasks}
+                  sleepGoal={sleepGoal}
+                />
+              )}
+            </div>
           );
         })}
       </div>

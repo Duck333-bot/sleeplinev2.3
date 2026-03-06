@@ -161,3 +161,12 @@
 - [x] Implement safe schedule update logic (blocksToTasks, applyPlan)
 - [x] Add tests and verify all flows (11 new tests, 241 total passing)
 - [ ] Save checkpoint and deliver
+
+
+## Bedtime Explanation Feature
+- [x] Create bedtime explanation LLM function with calm sleep coach prompt (bedtime-explanation.ts)
+- [x] Build UI card component for bedtime explanation (BedtimeExplanation.tsx)
+- [x] Integrate explanation into sleep option display (ActionCard.tsx)
+- [x] Add loading, success, and fallback states (polished UI states)
+- [x] Test all flows and verify stability (24 new tests, 265 total passing)
+- [ ] Save checkpoint and deliver
