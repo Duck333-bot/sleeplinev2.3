@@ -1,21 +1,46 @@
 /**
- * Home page — SEO-optimized landing page
- * Displays when user is not authenticated or on initial load
+ * Home page — Adaptive landing page + dashboard
+ * - Shows landing page when not authenticated
+ * - Shows Today Dashboard when authenticated
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import TodayDashboard from "@/components/TodayDashboard";
 import { Moon, Zap, BarChart3, Clock } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const { user } = useAuth();
+  const todayPlan = useStore(s => s.todayPlan());
 
-  // If user is authenticated, show nothing (App.tsx will redirect to dashboard)
+  // If user is authenticated, show the Today Dashboard
   if (user) {
-    return null;
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-6"
+      >
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+            Today's Dashboard
+          </h1>
+          <p className="text-sm text-[var(--sl-text-muted)] mt-1" style={{ fontFamily: "var(--font-body)" }}>
+            Your daily command center for sleep and productivity
+          </p>
+        </div>
+
+        {/* Dashboard */}
+        <TodayDashboard />
+      </motion.div>
+    );
   }
 
+  // Otherwise show landing page
   return (
     <div className="min-h-screen relative">
       {/* Aurora background */}
