@@ -151,3 +151,13 @@
 - [x] Integrate review component into dashboard (TodayDashboard.tsx)
 - [x] Add tests and verify all flows (10 new tests, 230 total passing)
 - [ ] Save checkpoint and deliver
+
+
+## Optimize My Day Feature
+- [x] Understand current schedule structure and constraints
+- [x] Create schedule optimization LLM function with prompt (schedule-optimizer.ts)
+- [x] Build optimization preview UI component (OptimizationPreview.tsx)
+- [x] Add optimize button to timeline and integrate flow (Timeline.tsx)
+- [x] Implement safe schedule update logic (blocksToTasks, applyPlan)
+- [x] Add tests and verify all flows (11 new tests, 241 total passing)
+- [ ] Save checkpoint and deliver
