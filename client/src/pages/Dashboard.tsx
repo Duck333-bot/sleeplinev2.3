@@ -6,12 +6,14 @@
  * - Right: Today Timeline + Tasks
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore, getCurrentBlock, getNextBlock } from "@/lib/store";
 import ClockRing from "@/components/ClockRing";
 import Timeline from "@/components/Timeline";
 import AIPlanPanel from "@/components/AIPlanPanel";
 import { SleepOptionsCard } from "@/components/ActionCard";
+import OptimizeReviewPanel from "@/components/OptimizeReviewPanel";
+import type { Task } from "@/lib/schemas";
 import { motion } from "framer-motion";
 import { Sparkles, Calendar, Activity, CheckCircle2, Timer, Coffee } from "lucide-react";
 
@@ -20,6 +22,37 @@ export default function Dashboard() {
   const tickFocus = useStore(s => s.tickFocus);
   const focusTimer = useStore(s => s.focusTimer);
   const user = useStore(s => s.user);
+
+  // Optimize panel state
+  const [showOptimizePanel, setShowOptimizePanel] = useState(false);
+  const [optimizeData, setOptimizeData] = useState<any>(null);
+  const [isApplyingOptimization, setIsApplyingOptimization] = useState(false);
+
+  // Expose to Timeline via window for cross-component communication
+  useEffect(() => {
+    (window as any).__sleeplineOptimizePanel = {
+      setShowOptimizePanel,
+      setOptimizeData,
+    };
+  }, []);
+
+  const handleApplyOptimization = () => {
+    if (optimizeData) {
+      setIsApplyingOptimization(true);
+      const applyPlan = useStore.getState().applyPlan;
+      applyPlan(optimizeData.optimized);
+      setTimeout(() => {
+        setIsApplyingOptimization(false);
+        setShowOptimizePanel(false);
+        setOptimizeData(null);
+      }, 500);
+    }
+  };
+
+  const handleCancelOptimization = () => {
+    setShowOptimizePanel(false);
+    setOptimizeData(null);
+  };
 
   // Focus timer tick
   useEffect(() => {
@@ -48,52 +81,33 @@ export default function Dashboard() {
     <div className="space-y-5">
       {/* Greeting bar */}
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: 0.4,
-          ease: "easeOut",
-          opacity: { duration: 0.3 },
-          y: { type: "spring", stiffness: 100, damping: 15 },
-        }}
         className="flex items-center justify-between"
       >
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
-            {greeting()}, {user?.name || "Sleeper"}
-          </h2>
-          <p className="text-xs text-[var(--sl-text-muted)] flex items-center gap-1.5 mt-1">
-            <Calendar className="w-3.5 h-3.5" />
-            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          <h1 className="text-2xl font-bold text-[var(--sl-text)]" style={{ fontFamily: "var(--font-heading)" }}>
+            {greeting()}, {user?.name || "there"}
+          </h1>
+          <p className="text-sm text-[var(--sl-text-muted)] mt-1" style={{ fontFamily: "var(--font-body)" }}>
+            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
           </p>
         </div>
-        {todayPlan && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--sl-glow-mint)]/10 border border-[var(--sl-glow-mint)]/20"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--sl-glow-mint)] animate-pulse" />
-            <span className="text-[10px] font-semibold text-[var(--sl-glow-mint)]" style={{ fontFamily: "var(--font-heading)" }}>
-              Plan Active
-            </span>
-          </motion.div>
-        )}
       </motion.div>
 
-      {/* Stats row — only when plan is active */}
-      {stats && todayPlan && (
+      {/* Stats bar */}
+      {stats && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="flex items-center gap-3 flex-wrap"
+          className="flex gap-3 flex-wrap"
         >
           <StatPill
             icon={<CheckCircle2 className="w-3 h-3" />}
-            label="Tasks"
+            label="Completed"
             value={`${stats.completed}/${stats.total}`}
-            color="var(--sl-glow-periwinkle)"
+            color="var(--sl-glow-green)"
           />
           <StatPill
             icon={<Coffee className="w-3 h-3" />}
@@ -107,7 +121,7 @@ export default function Dashboard() {
             value={focusTimer ? "Active" : "Idle"}
             color={focusTimer ? "var(--sl-glow-amber)" : "var(--sl-text-muted)"}
           />
-          {todayPlan.warnings.length > 0 && (
+          {todayPlan?.warnings && todayPlan.warnings.length > 0 && (
             <StatPill
               icon={<Activity className="w-3 h-3" />}
               label="Warnings"
@@ -119,47 +133,61 @@ export default function Dashboard() {
       )}
 
       {/* 3-column layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_340px] gap-4 lg:gap-5">
-        {/* Left: AI Plan Panel */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="glass-card p-4 lg:max-h-[calc(100vh-200px)] lg:overflow-hidden flex flex-col order-2 lg:order-1"
-        >
-          <AIPlanPanel />
-        </motion.div>
+      {todayPlan && (
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr_340px] gap-4 lg:gap-5">
+          {/* Left: AI Plan Panel */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass-card p-4 lg:max-h-[calc(100vh-200px)] lg:overflow-hidden flex flex-col order-2 lg:order-1"
+          >
+            <AIPlanPanel />
+          </motion.div>
 
-        {/* Center: Clock Ring + Sleep Options */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="flex flex-col items-center gap-6 order-1 lg:order-2"
-        >
-          <ClockRing />
+          {/* Center: Clock Ring + Sleep Options */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="flex flex-col items-center gap-6 order-1 lg:order-2"
+          >
+            <ClockRing />
 
-          {/* Sleep Options — only in center column */}
-          {todayPlan && todayPlan.sleepOptions.length > 0 && (
-            <div className="w-full max-w-md">
-              <SleepOptionsCard
-                options={todayPlan.sleepOptions}
-                selectedId={todayPlan.selectedSleepOptionId}
-              />
-            </div>
-          )}
-        </motion.div>
+            {/* Sleep Options — only in center column */}
+            {todayPlan.sleepOptions && todayPlan.sleepOptions.length > 0 && (
+              <div className="w-full max-w-md">
+                <SleepOptionsCard
+                  options={todayPlan.sleepOptions}
+                  selectedId={todayPlan.selectedSleepOptionId}
+                />
+              </div>
+            )}
+          </motion.div>
 
-        {/* Right: Timeline */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="glass-card p-4 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto order-3"
-        >
-          <Timeline />
-        </motion.div>
-      </div>
+          {/* Right: Timeline */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="glass-card p-4 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto order-3"
+          >
+            <Timeline />
+          </motion.div>
+        </div>
+      )}
+
+      {/* Optimize Review Panel */}
+      <OptimizeReviewPanel
+        isOpen={showOptimizePanel}
+        original={optimizeData?.original || []}
+        optimized={optimizeData?.optimized || []}
+        summary={optimizeData?.summary || []}
+        reason={optimizeData?.reason || ""}
+        onApply={handleApplyOptimization}
+        onCancel={handleCancelOptimization}
+        isApplying={isApplyingOptimization}
+      />
     </div>
   );
 }

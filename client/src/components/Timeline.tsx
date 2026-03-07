@@ -16,7 +16,7 @@ import {
   ArrowRight, CalendarClock, Wand2, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import OptimizationReviewSheet from "./OptimizationReviewSheet";
+// Optimization moved to Dashboard-level panel
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -54,17 +54,23 @@ export default function Timeline() {
   const snoozeTask = useStore(s => s.snoozeTask);
   const applyPlan = useStore(s => s.applyPlan);
 
-  const [showOptimization, setShowOptimization] = useState(false);
-  const [optimizationData, setOptimizationData] = useState<any>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
-  const [isApplying, setIsApplying] = useState(false);
 
   const optimizeMutation = trpc.scheduleOptimizer.optimize.useMutation({
     onSuccess: (result) => {
       setIsOptimizing(false);
       if (result.success && result.optimization) {
-        setOptimizationData(result);
-        setShowOptimization(true);
+        // Send data to Dashboard panel via window
+        const panel = (window as any).__sleeplineOptimizePanel;
+        if (panel) {
+          panel.setOptimizeData({
+            original: todayPlan?.tasks || [],
+            optimized: result.optimization.blocks || [],
+            summary: result.optimization.improvements || [],
+            reason: result.optimization.reason || "",
+          });
+          panel.setShowOptimizePanel(true);
+        }
         toast.success("Schedule optimized!");
       } else {
         toast.error(result.error || "Failed to optimize schedule");
@@ -81,26 +87,7 @@ export default function Timeline() {
   const now = new Date();
   const currentMin = now.getHours() * 60 + now.getMinutes();
 
-  const handleApplyOptimization = async () => {
-    if (!optimizationData?.optimizedTasks || !todayPlan) return;
 
-    setIsApplying(true);
-    try {
-      const optimizedPlan = {
-        ...todayPlan,
-        tasks: optimizationData.optimizedTasks,
-      };
-
-      applyPlan(optimizedPlan);
-      setShowOptimization(false);
-      setOptimizationData(null);
-      toast.success("Schedule optimized and applied!");
-    } catch (error) {
-      toast.error("Failed to apply optimization");
-    } finally {
-      setIsApplying(false);
-    }
-  };
 
   if (!todayPlan) {
     return (
@@ -317,17 +304,7 @@ export default function Timeline() {
         </div>
       )}
 
-      {/* Optimization Review Sheet Modal */}
-      {showOptimization && optimizationData && (
-        <OptimizationReviewSheet
-          original={todayPlan.tasks}
-          optimized={optimizationData.optimizedTasks}
-          reason={optimizationData.optimization.reason}
-          onApply={handleApplyOptimization}
-          onCancel={() => setShowOptimization(false)}
-          isApplying={isApplying}
-        />
-      )}
+      {/* Optimization moved to Dashboard-level slide-over panel */}
     </div>
   );
 }
