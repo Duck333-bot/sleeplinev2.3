@@ -13,10 +13,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Play, CheckCircle2, Clock, Pause,
   Coffee, Moon, Sun, Utensils, Zap, Timer, Sparkles,
-  ArrowRight, CalendarClock, Wand2, Loader2
+  ArrowRight, CalendarClock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import OptimizationPreview from "./OptimizationPreview";
+
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -54,53 +54,14 @@ export default function Timeline() {
   const snoozeTask = useStore(s => s.snoozeTask);
   const applyPlan = useStore(s => s.applyPlan);
 
-  const [showOptimization, setShowOptimization] = useState(false);
-  const [optimizationData, setOptimizationData] = useState<any>(null);
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [isApplying, setIsApplying] = useState(false);
 
-  const optimizeMutation = trpc.scheduleOptimizer.optimize.useMutation({
-    onSuccess: (result) => {
-      setIsOptimizing(false);
-      if (result.success && result.optimization) {
-        setOptimizationData(result);
-        setShowOptimization(true);
-        toast.success("Schedule optimized!");
-      } else {
-        toast.error(result.error || "Failed to optimize schedule");
-      }
-    },
-    onError: (error) => {
-      setIsOptimizing(false);
-      toast.error(error.message || "Failed to optimize schedule");
-    },
-  });
 
   const items = useMemo(() => getTimelineItems(todayPlan), [todayPlan]);
   const unscheduled = useMemo(() => getUnscheduledTasks(todayPlan), [todayPlan]);
   const now = new Date();
   const currentMin = now.getHours() * 60 + now.getMinutes();
 
-  const handleApplyOptimization = async () => {
-    if (!optimizationData?.optimizedTasks || !todayPlan) return;
 
-    setIsApplying(true);
-    try {
-      const optimizedPlan = {
-        ...todayPlan,
-        tasks: optimizationData.optimizedTasks,
-      };
-
-      applyPlan(optimizedPlan);
-      setShowOptimization(false);
-      setOptimizationData(null);
-      toast.success("Schedule optimized and applied!");
-    } catch (error) {
-      toast.error("Failed to apply optimization");
-    } finally {
-      setIsApplying(false);
-    }
-  };
 
   if (!todayPlan) {
     return (
@@ -132,32 +93,7 @@ export default function Timeline() {
           <span className="text-[10px] text-[var(--sl-text-muted)] tabular-nums" style={{ fontFamily: "var(--font-mono)" }}>
             {completedCount}/{totalTasks} done
           </span>
-          {todayPlan && todayPlan.tasks.length > 0 && (
-            <Button
-              onClick={() => {
-                setIsOptimizing(true);
-                const sleepOption = todayPlan.sleepOptions.find(o => o.id === todayPlan.selectedSleepOptionId) || todayPlan.sleepOptions[0];
-                optimizeMutation.mutate({
-                  tasks: todayPlan.tasks,
-                  wakeTime: sleepOption.wakeMin,
-                  bedtime: sleepOption.bedtimeMin,
-                  sleepDurationHrs: sleepOption.sleepDurationHrs,
-                });
-              }}
-              size="sm"
-              variant="ghost"
-              className="h-6 px-2 text-[10px] gap-1.5 hover:bg-[var(--sl-glow-cyan)]/10 text-[var(--sl-glow-cyan)]"
-              disabled={isOptimizing}
-              title="AI rearranges your tasks to improve focus and energy."
-            >
-              {isOptimizing ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <Wand2 className="w-3 h-3" />
-              )}
-              <span>{isOptimizing ? "Analyzing..." : "Optimize Schedule"}</span>
-            </Button>
-          )}
+
         </div>
       </div>
 
@@ -317,18 +253,7 @@ export default function Timeline() {
         </div>
       )}
 
-      {/* Optimization Preview Modal */}
-      {showOptimization && optimizationData && (
-        <OptimizationPreview
-          original={todayPlan.tasks}
-          optimized={optimizationData.optimizedTasks}
-          reason={optimizationData.optimization.reason}
-          improvements={optimizationData.optimization.improvements}
-          onApply={handleApplyOptimization}
-          onCancel={() => setShowOptimization(false)}
-          isApplying={isApplying}
-        />
-      )}
+
     </div>
   );
 }

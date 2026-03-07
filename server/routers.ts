@@ -5,7 +5,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { aiRouter } from "./ai-planner";
 import { aiDayPlannerRouter } from "./ai-day-planner-router";
 import { dayReviewRouter } from "./day-review-router";
-import { scheduleOptimizerRouter } from "./schedule-optimizer-router";
+
 import { bedtimeExplanationRouter } from "./bedtime-explanation-router";
 import { dataRouter } from "./data-router";
 import { taskRouter } from "./task-router";
@@ -25,7 +25,7 @@ export const appRouter = router({
   ai: aiRouter,
   aiDayPlanner: aiDayPlannerRouter,
   dayReview: dayReviewRouter,
-  scheduleOptimizer: scheduleOptimizerRouter,
+
   bedtimeExplanation: bedtimeExplanationRouter,
   data: dataRouter,
   task: taskRouter,

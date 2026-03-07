@@ -153,14 +153,13 @@
 - [ ] Save checkpoint and deliver
 
 
-## Optimize My Day Feature
-- [x] Understand current schedule structure and constraints
-- [x] Create schedule optimization LLM function with prompt (schedule-optimizer.ts)
-- [x] Build optimization preview UI component (OptimizationPreview.tsx)
-- [x] Add optimize button to timeline and integrate flow (Timeline.tsx)
-- [x] Implement safe schedule update logic (blocksToTasks, applyPlan)
-- [x] Add tests and verify all flows (11 new tests, 241 total passing)
-- [ ] Save checkpoint and deliver
+## Optimize My Day Feature (DELETED)
+- [x] Feature completely removed from codebase
+- [x] All server files deleted (schedule-optimizer.ts, schedule-optimizer-router.ts)
+- [x] All client components deleted (OptimizationPreview.tsx)
+- [x] All tests deleted (schedule-optimizer.test.ts)
+- [x] All references removed from Timeline and routers
+- [x] All 254 tests passing, zero TypeScript errors
 
 
 ## Bedtime Explanation Feature
@@ -182,11 +181,5 @@
 - [ ] Save checkpoint and deliver
 
 
-## Fix Optimize My Day Feature (Production-Grade)
-- [x] Diagnose root cause of validation crash (schema max 500 chars)
-- [x] Improve AI prompt for reliable structured output (120 char limit)
-- [x] Add validation layer and safeguards (truncate + error handling)
-- [x] Improve button clarity and add tooltip ("Optimize Schedule")
-- [x] Enhance preview UI and UX polish ("Apply to my day")
-- [x] Test all flows and verify stability (265 tests passing)
-- [ ] Save checkpoint and deliver
+## Fix Optimize My Day Feature (DELETED)
+- [x] Feature completely removed along with Optimize Schedule feature
