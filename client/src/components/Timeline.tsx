@@ -148,13 +148,14 @@ export default function Timeline() {
               variant="ghost"
               className="h-6 px-2 text-[10px] gap-1.5 hover:bg-[var(--sl-glow-cyan)]/10 text-[var(--sl-glow-cyan)]"
               disabled={isOptimizing}
+              title="AI rearranges your tasks to improve focus and energy."
             >
               {isOptimizing ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
                 <Wand2 className="w-3 h-3" />
               )}
-              <span>Optimize</span>
+              <span>{isOptimizing ? "Analyzing..." : "Optimize Schedule"}</span>
             </Button>
           )}
         </div>

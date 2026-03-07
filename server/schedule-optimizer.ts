@@ -22,7 +22,7 @@ export type OptimizedBlock = z.infer<typeof OptimizedBlockSchema>;
 
 export const OptimizationResultSchema = z.object({
   blocks: z.array(OptimizedBlockSchema),
-  reason: z.string().min(10).max(500),
+  reason: z.string().min(5).max(120), // Enforce short explanation
   improvements: z.array(z.string()).optional(),
 });
 
@@ -30,32 +30,24 @@ export type OptimizationResult = z.infer<typeof OptimizationResultSchema>;
 
 // ─── System Prompt ───────────────────────────────────────────
 
-export const SCHEDULE_OPTIMIZATION_PROMPT = `You are a productivity and sleep optimization assistant. Your role is to analyze a user's daily schedule and reorganize tasks to improve focus, energy alignment, and sleep consistency.
+export const SCHEDULE_OPTIMIZATION_PROMPT = `You are a schedule optimization assistant.
 
-When optimizing a schedule, consider:
-- Energy levels throughout the day (high focus in morning, dip after lunch, recovery in afternoon)
-- Task types and their optimal times (deep work early, admin tasks mid-day, creative work when energized)
-- Break frequency and recovery time
-- Sleep timing and its impact on next day's energy
-- Task priorities and dependencies
-- Chronological order (tasks must flow forward in time)
+Your task: Improve the user's daily schedule for better focus, energy, and sleep.
 
-CRITICAL CONSTRAINTS (NEVER BREAK):
-1. Keep task durations EXACTLY the same (end - start must not change)
-2. Avoid any overlaps between tasks
-3. Preserve all sleep blocks exactly as they are
-4. Maintain strict chronological order (no task can start before the previous one ends)
-5. Do not move locked tasks (marked as "locked": true)
-6. Keep system blocks (breaks, wind-down) in place
+RULES (NEVER BREAK):
+1. Keep task durations EXACTLY the same
+2. Avoid overlaps
+3. Preserve sleep blocks
+4. Maintain chronological order
+5. Do not move locked tasks
 
-OPTIMIZATION GOALS:
-1. Move deep focus tasks (study, work) to peak energy windows (usually 6am-10am, 2pm-4pm)
-2. Place exercise during energy dips or recovery windows
-3. Group similar task types together when possible
-4. Ensure adequate breaks between intense tasks
-5. Align bedtime with sleep goal
+OPTIMIZATION STRATEGY:
+- Move deep focus tasks (study, work) to morning (6am-10am)
+- Place light tasks mid-day
+- Use afternoon for exercise or recovery
+- Keep sleep timing consistent
 
-Return ONLY valid JSON matching this schema:
+Return ONLY valid JSON:
 {
   "blocks": [
     {
@@ -66,12 +58,14 @@ Return ONLY valid JSON matching this schema:
       "priority": "high"
     }
   ],
-  "reason": "Explanation of optimization strategy and improvements",
-  "improvements": ["Improvement 1", "Improvement 2"]
+  "reason": "Brief explanation under 120 characters"
 }
 
-The "blocks" array should contain ALL tasks and system blocks in optimized order.
-Include type and priority from original tasks.`;
+IMPORTANT:
+- Keep "reason" under 120 characters
+- Include ALL tasks in "blocks"
+- Times in minutes since midnight (0-1440)
+- Return only JSON, no other text`;
 
 // ─── Helper to format schedule for LLM ───────────────────────
 
@@ -173,6 +167,12 @@ export async function optimizeSchedule(data: {
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
+    
+    // Safeguard: truncate reason if it exceeds 120 characters
+    if (parsed.reason && typeof parsed.reason === "string" && parsed.reason.length > 120) {
+      parsed.reason = parsed.reason.slice(0, 120).trim();
+    }
+    
     const optimization = OptimizationResultSchema.parse(parsed);
 
     // Validate that blocks are properly ordered and non-overlapping
@@ -180,10 +180,27 @@ export async function optimizeSchedule(data: {
       const current = optimization.blocks[i];
       const next = optimization.blocks[i + 1];
 
+      // Check for overlap
       if (current.end > next.start) {
         return {
           success: false,
-          error: `Optimization created overlap between "${current.title}" and "${next.title}"`,
+          error: "Optimization created overlapping tasks. Your schedule remains unchanged.",
+        };
+      }
+      
+      // Check that times are within valid range
+      if (current.start < 0 || current.start > 1440 || current.end < 0 || current.end > 1440) {
+        return {
+          success: false,
+          error: "Optimization produced invalid times. Your schedule remains unchanged.",
+        };
+      }
+      
+      // Check that end > start
+      if (current.end <= current.start) {
+        return {
+          success: false,
+          error: "Optimization produced invalid task duration. Your schedule remains unchanged.",
         };
       }
     }
@@ -209,9 +226,20 @@ export async function optimizeSchedule(data: {
     return { success: true, optimization };
   } catch (error) {
     console.error("Schedule optimization error:", error);
+    
+    // Provide user-friendly error message
+    let errorMsg = "No optimization needed today";
+    if (error instanceof z.ZodError) {
+      errorMsg = "Optimization validation failed. Your schedule remains unchanged.";
+    } else if (error instanceof Error) {
+      errorMsg = error.message.includes("parse") 
+        ? "Couldn't parse optimization response. Your schedule remains unchanged."
+        : "Optimization failed. Your schedule remains unchanged.";
+    }
+    
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error during optimization",
+      error: errorMsg,
     };
   }
 }

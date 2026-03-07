@@ -53,10 +53,10 @@ export default function OptimizationPreview({
             </div>
             <div>
               <h2 className="text-lg font-bold text-[var(--sl-text)]" style={{ fontFamily: "var(--font-heading)" }}>
-                Optimized Schedule
+                Here's a suggested improvement
               </h2>
               <p className="text-xs text-[var(--sl-text-muted)]" style={{ fontFamily: "var(--font-body)" }}>
-                Reorganized for better focus, energy, and sleep
+                Review the changes and apply if it feels right
               </p>
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function OptimizationPreview({
             ) : (
               <>
                 <CheckCircle2 className="w-4 h-4" />
-                <span>Apply Optimization</span>
+                <span>Apply to my day</span>
               </>
             )}
           </Button>
