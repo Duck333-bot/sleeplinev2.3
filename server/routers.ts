@@ -7,6 +7,7 @@ import { aiDayPlannerRouter } from "./ai-day-planner-router";
 import { dayReviewRouter } from "./day-review-router";
 
 import { bedtimeExplanationRouter } from "./bedtime-explanation-router";
+import { planningConversationRouter } from "./planning-conversation-router";
 import { dataRouter } from "./data-router";
 import { taskRouter } from "./task-router";
 
@@ -25,7 +26,7 @@ export const appRouter = router({
   ai: aiRouter,
   aiDayPlanner: aiDayPlannerRouter,
   dayReview: dayReviewRouter,
-
+  planningConversation: planningConversationRouter,
   bedtimeExplanation: bedtimeExplanationRouter,
   data: dataRouter,
   task: taskRouter,

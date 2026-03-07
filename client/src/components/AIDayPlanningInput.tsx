@@ -1,10 +1,11 @@
 /**
- * AI Day Planning Input Component
+ * AI Day Planning Input Component with Conversation Support
  * 
  * Flagship feature: "Describe your day, and Sleepline builds the plan around your sleep."
  * 
  * Features:
  * - Natural language input with smart placeholder
+ * - Multi-turn conversation with clarifying questions
  * - Quick example prompts
  * - Real-time character count
  * - Loading state with animated feedback
@@ -18,6 +19,7 @@ import { Send, Sparkles, Loader2, AlertCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { PlanningConversation, type ConversationMessage } from "./PlanningConversation";
 
 interface AIDayPlanningInputProps {
   onPlanGenerated?: (plan: any) => void;
@@ -45,6 +47,13 @@ const EXAMPLE_PROMPTS = [
   },
 ];
 
+type PlanningState = "input" | "conversation" | "generating";
+
+interface ConversationState {
+  messages: ConversationMessage[];
+  isReadyToGenerate: boolean;
+}
+
 export default function AIDayPlanningInput({
   onPlanGenerated,
   wakeTime = "07:00",
@@ -52,17 +61,86 @@ export default function AIDayPlanningInput({
   disabled = false,
 }: AIDayPlanningInputProps) {
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [planningState, setPlanningState] = useState<PlanningState>("input");
   const [error, setError] = useState<string | null>(null);
+  const [conversation, setConversation] = useState<ConversationState>({
+    messages: [],
+    isReadyToGenerate: false,
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const generatePlan = trpc.aiDayPlanner.generateFromDescription.useMutation({
+  // Start conversation mutation
+  const startConversation = trpc.planningConversation.startConversation.useMutation({
+    onSuccess: (result) => {
+      setIsLoading(false);
+      if (result.success) {
+        setConversation({
+          messages: result.conversation.messages,
+          isReadyToGenerate: result.conversation.isReadyToGenerate,
+        });
+
+        if (result.needsQuestions && result.questions.length > 0) {
+          setPlanningState("conversation");
+          toast.info("I have a few questions", {
+            description: "Help me build a better plan for you",
+          });
+        } else {
+          // Skip directly to generation
+          generatePlanFromConversation(result.conversation);
+        }
+      } else {
+        setError("Failed to start conversation");
+        toast.error("Failed to start conversation");
+      }
+    },
+    onError: (error) => {
+      setIsLoading(false);
+      const message = error.message || "We couldn't generate that just now";
+      setError(message);
+      toast.error(message);
+    },
+  });
+
+  // Respond to questions mutation
+  const respondToQuestions = trpc.planningConversation.respondToQuestions.useMutation({
+    onSuccess: (result) => {
+      setIsLoading(false);
+      if (result.success) {
+        setConversation({
+          messages: result.conversation.messages,
+          isReadyToGenerate: result.conversation.isReadyToGenerate,
+        });
+
+        if (result.isReadyToGenerate) {
+          generatePlanFromConversation(result.conversation);
+        } else if (result.followUpQuestion) {
+          toast.info("One more thing", {
+            description: result.followUpQuestion,
+          });
+        }
+      } else {
+        setError("Failed to process response");
+        toast.error("Failed to process response");
+      }
+    },
+    onError: (error) => {
+      setIsLoading(false);
+      const message = error.message || "We couldn't process that";
+      setError(message);
+      toast.error(message);
+    },
+  });
+
+  // Generate plan mutation
+  const generatePlan = trpc.planningConversation.generatePlanFromConversation.useMutation({
     onSuccess: (result) => {
       setIsLoading(false);
       if (result.success && result.plan) {
-        toast.success("Your plan is ready", { description: "Review and apply to your day" });
+        toast.success("Your plan is ready", {
+          description: "Review and apply to your day",
+        });
         onPlanGenerated?.(result.plan);
-        setInput("");
-        setError(null);
+        resetForm();
       } else {
         const errorMsg = result.error || "We couldn't generate that just now";
         setError(errorMsg);
@@ -76,6 +154,16 @@ export default function AIDayPlanningInput({
       toast.error(message);
     },
   });
+
+  const generatePlanFromConversation = (conv: any) => {
+    setPlanningState("generating");
+    setIsLoading(true);
+    generatePlan.mutate({
+      conversation: conv,
+      wakeTime,
+      bedtime,
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,11 +181,21 @@ export default function AIDayPlanningInput({
 
     setError(null);
     setIsLoading(true);
-    generatePlan.mutate({
-      description: text,
-      wakeTime,
-      bedtime,
+    setPlanningState("conversation");
+    startConversation.mutate({ userInput: text });
+  };
+
+  const handleConversationMessage = (message: string) => {
+    setError(null);
+    setIsLoading(true);
+    respondToQuestions.mutate({
+      conversation,
+      userResponse: message,
     });
+  };
+
+  const handleSkipQuestions = () => {
+    generatePlanFromConversation(conversation);
   };
 
   const handleQuickPrompt = (prompt: string) => {
@@ -105,10 +203,62 @@ export default function AIDayPlanningInput({
     setError(null);
   };
 
+  const resetForm = () => {
+    setInput("");
+    setPlanningState("input");
+    setConversation({ messages: [], isReadyToGenerate: false });
+    setError(null);
+  };
+
   const charCount = input.length;
   const maxChars = 2000;
   const isNearLimit = charCount > maxChars * 0.8;
 
+  // Render conversation view
+  if (planningState === "conversation" || planningState === "generating") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-4 h-full flex flex-col"
+      >
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-[var(--sl-glow-amber)]" />
+            <h2 className="text-lg font-bold tracking-tight">
+              {planningState === "generating" ? "Building your plan..." : "Let's refine your plan"}
+            </h2>
+          </div>
+          <p className="text-sm text-[var(--sl-text-muted)]">
+            {planningState === "generating"
+              ? "Creating your sleep-optimized schedule..."
+              : "Help me understand your preferences better"}
+          </p>
+        </div>
+
+        <div className="flex-1 min-h-0">
+          <PlanningConversation
+            messages={conversation.messages}
+            isLoading={isLoading}
+            onSendMessage={handleConversationMessage}
+            onSkipQuestions={handleSkipQuestions}
+            showSkipButton={!conversation.isReadyToGenerate && !isLoading}
+          />
+        </div>
+
+        <Button
+          onClick={resetForm}
+          variant="outline"
+          size="sm"
+          disabled={isLoading}
+        >
+          Start over
+        </Button>
+      </motion.div>
+    );
+  }
+
+  // Render input view
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -119,12 +269,19 @@ export default function AIDayPlanningInput({
       <div className="space-y-2 mb-6">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-[var(--sl-glow-amber)]" />
-          <h2 className="text-lg font-bold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>
+          <h2
+            className="text-lg font-bold tracking-tight"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
             Describe Your Day
           </h2>
         </div>
-        <p className="text-sm text-[var(--sl-text-muted)]" style={{ fontFamily: "var(--font-body)" }}>
-          Tell Sleepline what you need to do, and it will build a sleep-optimized plan around your schedule.
+        <p
+          className="text-sm text-[var(--sl-text-muted)]"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          Tell Sleepline what you need to do, and it will build a sleep-optimized plan around your
+          schedule.
         </p>
       </div>
 
@@ -147,9 +304,13 @@ export default function AIDayPlanningInput({
           />
 
           {/* Character count */}
-          <div className={`absolute bottom-3 right-3 text-[10px] font-mono transition-colors ${
-            isNearLimit ? "text-[var(--sl-glow-coral)]" : "text-[var(--sl-text-muted)] opacity-50"
-          }`}>
+          <div
+            className={`absolute bottom-3 right-3 text-[10px] font-mono transition-colors ${
+              isNearLimit
+                ? "text-[var(--sl-glow-coral)]"
+                : "text-[var(--sl-text-muted)] opacity-50"
+            }`}
+          >
             {charCount}/{maxChars}
           </div>
         </div>
@@ -164,7 +325,10 @@ export default function AIDayPlanningInput({
               className="flex items-start gap-2 p-3 rounded-lg bg-[var(--sl-glow-coral)]/10 border border-[var(--sl-glow-coral)]/20"
             >
               <AlertCircle className="w-4 h-4 text-[var(--sl-glow-coral)] flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-[var(--sl-glow-coral)]" style={{ fontFamily: "var(--font-body)" }}>
+              <p
+                className="text-xs text-[var(--sl-glow-coral)]"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
                 {error}
               </p>
             </motion.div>
@@ -195,40 +359,27 @@ export default function AIDayPlanningInput({
 
       {/* Quick prompts */}
       <div className="space-y-2">
-        <p className="text-xs text-[var(--sl-text-muted)] uppercase tracking-[0.1em] font-semibold" style={{ fontFamily: "var(--font-heading)" }}>
+        <p
+          className="text-xs text-[var(--sl-text-muted)] uppercase tracking-[0.1em] font-semibold"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
           Try these examples
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {EXAMPLE_PROMPTS.map((prompt, i) => (
-            <motion.button
+            <Button
               key={i}
               onClick={() => handleQuickPrompt(prompt.text)}
+              variant="outline"
+              size="sm"
               disabled={isLoading || disabled}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="text-left p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-[var(--sl-glow-periwinkle)]/30 hover:bg-white/[0.05] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-xs h-auto py-2 px-2 text-left"
             >
-              <div className="flex items-start gap-2">
-                <Zap className="w-3 h-3 text-[var(--sl-glow-amber)] flex-shrink-0 mt-1" />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-[var(--sl-text)]" style={{ fontFamily: "var(--font-heading)" }}>
-                    {prompt.label}
-                  </p>
-                  <p className="text-[9px] text-[var(--sl-text-muted)] line-clamp-2 mt-1" style={{ fontFamily: "var(--font-body)" }}>
-                    {prompt.text}
-                  </p>
-                </div>
-              </div>
-            </motion.button>
+              <Zap className="w-3 h-3 mr-1 flex-shrink-0" />
+              <span className="truncate">{prompt.label}</span>
+            </Button>
           ))}
         </div>
-      </div>
-
-      {/* Info text */}
-      <div className="p-3 rounded-lg bg-[var(--sl-glow-periwinkle)]/5 border border-[var(--sl-glow-periwinkle)]/10">
-        <p className="text-[10px] text-[var(--sl-text-muted)]" style={{ fontFamily: "var(--font-body)" }}>
-          💡 <strong>Tip:</strong> Include specific times (e.g., "school 8-3"), durations (e.g., "2 hours of study"), or just list what you need to do. Sleepline will arrange everything around your sleep.
-        </p>
       </div>
     </motion.div>
   );

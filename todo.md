@@ -183,3 +183,14 @@
 
 ## Fix Optimize My Day Feature (DELETED)
 - [x] Feature completely removed along with Optimize Schedule feature
+
+
+## AI Day Planning Conversation Feature
+- [ ] Understand current AI day planning flow and architecture
+- [ ] Create conversation state management and types
+- [ ] Build AI clarifying questions prompt and logic
+- [ ] Create conversation UI component with chat bubbles
+- [ ] Integrate conversation into planning flow
+- [ ] Add tests for conversation logic
+- [ ] Test all flows and verify stability
+- [ ] Save checkpoint and deliver
