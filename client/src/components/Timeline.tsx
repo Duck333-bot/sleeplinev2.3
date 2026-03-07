@@ -16,7 +16,7 @@ import {
   ArrowRight, CalendarClock, Wand2, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import OptimizationPreview from "./OptimizationPreview";
+import OptimizationReviewSheet from "./OptimizationReviewSheet";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -317,13 +317,12 @@ export default function Timeline() {
         </div>
       )}
 
-      {/* Optimization Preview Modal */}
+      {/* Optimization Review Sheet Modal */}
       {showOptimization && optimizationData && (
-        <OptimizationPreview
+        <OptimizationReviewSheet
           original={todayPlan.tasks}
           optimized={optimizationData.optimizedTasks}
           reason={optimizationData.optimization.reason}
-          improvements={optimizationData.optimization.improvements}
           onApply={handleApplyOptimization}
           onCancel={() => setShowOptimization(false)}
           isApplying={isApplying}

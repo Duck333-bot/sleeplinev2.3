@@ -190,3 +190,14 @@
 - [x] Enhance preview UI and UX polish ("Apply to my day")
 - [x] Test all flows and verify stability (265 tests passing)
 - [ ] Save checkpoint and deliver
+
+
+## Optimize Schedule Modal Redesign
+- [x] Audit current OptimizationPreview component structure
+- [x] Create new simplified review sheet component (OptimizationReviewSheet.tsx)
+- [x] Implement before/after comparison list (clean, scannable format)
+- [x] Add summary bullets and AI reason block (auto-generated)
+- [x] Integrate new modal into Timeline component (replaced old modal)
+- [x] Test all interactions and edge cases (265 tests passing)
+- [x] Polish styling and verify premium feel (clean, calm, professional)
+- [ ] Save checkpoint and deliver
